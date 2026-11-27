@@ -1,51 +1,32 @@
 # Proje çalışma günlüğü
 
-Bu dosya yöneticiye yönelik kısa ilerleme kaydıdır. Yeni kararlar ve değişiklikler
-tarihli olarak en alta eklenecek.
+Bu dosya proje ilerlemesini ve teslim durumunu yönetici için özetler. Son güncelleme: 27 Kasım 2026.
 
-## 2026-11-27 — Başlangıç taslağı
+## Proje kapsamı ve varsayımlar
 
-- Devir raporundaki dosyalar çalışma klasöründe yoktu; kaynak iskeleti bu klasörde
-  yeniden kuruldu.
-- Başlangıç varsayımları korundu: STM32F401RE, HSI 16 MHz; PA0/PA1 ADC, TIM2 1 Hz,
-  USART2 115200, PA5 LED, PB0 buzzer sürücü ve PC13 aktif-yüksek buton.
-- Uygulama modülü, HAL başlangıç kodu, kesme dosyası, çevre birimi özeti ve README
-  eklendi. Varsayılan simülasyon normal, yüksek duman ve geçersiz örnek üretir.
-- İlk kaynak gözden geçirmesinde ADC taramasının iki rank'ını tek dönüşüm dizisinde
-  okumak ve ADC/UART/TIM2 saat, pin ve NVIC MSP kurulumlarını eklemek gerekti; düzeltildi.
-- Durum makinesi üç ardışık geçerli eşik aşımında alarmı kilitler. Geçersiz örnekte
-  Fault görünür; kilitli alarm durumu sensörler düzelene kadar bellekte tutulur.
-  Reset yalnızca geçerli ve tehlikesiz örnekten sonra kabul edilir.
-- Gerçek hedef derlemesi yapılmadı; bu klasörde HAL/CMSIS/startup/linker ve `.ioc`
-  yok. Bu nedenle proje henüz CubeIDE'de tek başına derlenebilir değil.
+- Proje, iş görüşmesi öncesi teknik değerlendirme için hazırlanmış bir STM32 HAL/C yangın alarm demosudur. Kullanıcının fiziksel STM32 kartı yoktur.
+- Firmware taslağında örnek hedef olarak NUCLEO-F401RE / STM32F401RE, HSI 16 MHz, PA0/PA1 ADC, TIM2 1 Hz, USART2 115200, PA5 LED, PB0 buzzer sürücü çıkışı ve PC13 buton varsayılmıştır. Kart/sensör doğrulaması yapılmadı.
+- ADC eşikleri örnek ham 12 bit sayımlarıdır; gerçek sensör kalibrasyonu değildir.
 
-## 2026-11-27 — GitHub ve donanımsız gösterim
+## Tamamlanan işler
 
-- Kullanıcının fiziksel kartı olmadığı, projenin iş görüşmesi öncesi deneme projesi
-  olduğu netleşti. NUCLEO-F401RE yalnızca örnek hedef olarak dokümante edildi.
-- GitHub deposunda durum makinesini kart olmadan gösterebilmek için CMake tabanlı
-  masaüstü demo eklendi. Bu demo, firmware ile aynı `fire_alarm.c` dosyasını kullanır;
-  terminalde normal, alarm, fault ve güvenli reset akışını gösterir.
-- Bu adım gerçek STM32 firmware derlemesinin yerini tutmaz; hedefe özel CubeIDE
-  projesi ve HAL paketleri hâlâ ayrıca gerekir.
+- HAL tabanlı firmware kaynak taslağı oluşturuldu: ADC, GPIO, TIM2, USART2, durum makinesi ve kesme işleyicileri.
+- Alarm, üç ardışık geçerli yüksek ölçümden sonra kilitlenir. Geçersiz örnek Fault üretir ve ardışık aşım sayacını sıfırlar. Alarm önceden kilitliyse sensör Fault durumuna geçse bile uyarı çıkışları etkin kalır.
+- Reset butonu 30 ms debounce edilir; alarm yalnızca ölçümler geçerli ve tehlike koşulu sona ermişse temizlenir.
+- Kart olmadan çalıştırılabilmesi için firmware ile aynı durum makinesini kullanan masaüstü HAL simülasyonu eklendi. `make demo` komutu GCC ve GNU Make ile derleyip Normal, Alarm, Fault ve güvenli reset akışını gösterir.
+- README, çevre birimi varsayımları ve sınırlamalar belgesi hazırlandı.
 
-## 2026-11-27 — Teslim hazırlığı
+## Doğrulama ve teslim
 
-- Demoyu CMake olmadan çalıştırmak için `make demo` hedefi eklendi; CMake yolu da
-  README'de alternatif olarak bırakıldı.
-- Kaynak incelemesinde sensör Fault olduğunda ardışık yüksek örnek sayacının
-  sıfırlanması ve alarm önceden kilitliyse çıkışların etkin kalması sağlandı.
-- Buton debounce mantığı, basma seviyesinin en az 30 ms kararlı kalmasını bekleyecek
-  şekilde düzenlendi.
-- Yönetici için `TESLIM_RAPORU.md` oluşturuldu. Depoda GitHub remote'u olmadığından
-  kodlar yerelde kaldı; hedef repo belirlenince upload yapılabilir.
-- GNU Make denemesinde `build` adlı hedef ile çıktı klasörü adının çakıştığı fark
-  edildi ve düzeltildi. GitHub bağlantısı kontrol edildi; listelenebilir depo yok.
+- Masaüstü demo bu ortamda GCC ile başarıyla derlendi ve senaryo çıktısı gözlemlendi. CMake bu ortamda mevcut olmadığından doğrulama `make demo` ile yapıldı.
+- GitHub deposu oluşturuldu ve proje kaynakları/belgeleri `main` dalına yüklendi: https://github.com/rumeysakturk/stm32-fire-alarm-demo
+- Depo herkese açıktır. README, `Core`, `host_demo` ve proje belgeleri Firefox üzerinden GitHub'da kontrol edildi.
+- Bu yükleme gerçek STM32 hedef derlemesi anlamına gelmez. `.ioc`, HAL/CMSIS paketleri, startup kodu ve linker betiği depoda yoktur; STM32CubeIDE derlemesi ve kart testi yapılmadı.
 
-### Yönetici kararına / donanım doğrulamasına açık noktalar
+## Açık teknik noktalar
 
-1. Kart gerçekten NUCLEO-F401RE mi? Farklıysa pin ve saat ayarları değişmeli.
-2. Duman ve sıcaklık sensörlerinin modeli, analog çıkış aralığı ve eşik dönüşümü nedir?
-3. PC13 butonunun basılma polaritesi ve pull-up/pull-down bağlantısı kartta doğrulanmalı.
-4. Buzzer sürücüsü ve besleme devresi belirlenmeli; MCU pini yükü doğrudan sürmemeli.
-5. Gerçek sensör arıza teşhisi ve güvenli durumda reset davranışı donanım gereksinimiyle teyit edilmeli.
+1. Gerçek kart ve sensör modelleri belli olduğunda pin eşlemesi, analog ön uç ve eşikler doğrulanmalı.
+2. Sensör kopukluğu yalnızca ADC'nin 0–4095 aralığına bakılarak her devrede belirlenemez; devreye uygun hata teşhisi tanımlanmalı.
+3. Buton polaritesi ve pull-up/pull-down bağlantısı kart üzerinde teyit edilmeli.
+4. Buzzer uygun sürücü devresiyle bağlanmalı; MCU pini buzzer yükünü doğrudan sürmemeli.
+5. Bu demo sertifikalı bir yangın güvenlik ürünü değildir.
